@@ -140,13 +140,32 @@ export function mealDay(profile: Profile, seed: number, date: string, training: 
   water("11:30", 300);
   addMeal("13:00", "Lunch", "lunch", split[2][1]);
   water("14:30", 300);
+  const shake = proteinShakePlan(profile);
+  const addShake = (time: string, scoops: number, withMilk: boolean, banana: boolean, label: string) => {
+    const foods: FoodLine[] = [{ name: `Whey protein (${scoops} scoop${scoops > 1 ? "s" : ""})`, amount: `${scoops * 30} g`, kcal: scoops * 120, protein: scoops * 24 }];
+    if (withMilk) foods.push({ name: "Low-fat milk", amount: "300 ml", kcal: 138, protein: 10 });
+    if (banana) foods.push({ name: "Banana", amount: "1 pc", kcal: 105, protein: 1 });
+    entries.push({
+      time,
+      kind: "supplement",
+      title: `${label}: protein shake`,
+      detail: `Shake ${scoops * 30} g powder with ${withMilk ? "300 ml low-fat milk" : "300 ml cold water"} — drink within 30-60 min. Plant protein (pea / soy) works the same.`,
+      foods,
+      kcal: foods.reduce((s, f) => s + f.kcal, 0),
+      protein: foods.reduce((s, f) => s + f.protein, 0),
+      waterMl: withMilk ? 0 : 300,
+    });
+  };
+
   if (training) {
     addMeal("16:30", "Pre-workout", "preworkout", split[3][1]);
     water("17:00", 250, "Top up before training");
     entries.push({ time: "17:30", kind: "workout", title: "Workout", detail: "Sip 500 ml water during the session", waterMl: 500 });
-    addMeal("19:00", "Post-workout", "postworkout", split[4][1]);
+    if (shake.allowed) addShake("18:45", shake.trainingScoops, profile.goal !== "fat_loss", profile.goal !== "fat_loss", "Post-workout");
+    else addMeal("19:00", "Post-workout", "postworkout", split[4][1]);
     addMeal("20:00", "Dinner", "dinner", split[5][1]);
   } else {
+    if (shake.allowed && shake.restScoops > 0) addShake("11:00", shake.restScoops, false, false, "Rest-day");
     addMeal("16:30", "Afternoon snack", "snack", split[3][1]);
     water("17:30", 300, "Light walk 20-30 min");
     addMeal("19:30", "Dinner", "dinner", split[4][1]);
@@ -165,6 +184,32 @@ export function mealDay(profile: Profile, seed: number, date: string, training: 
     { kcal: 0, protein: 0, waterMl: 0 },
   );
   return { date, training, entries, totals, target: { kcal: kcalTarget, protein: n.protein, waterMl: waterTarget } };
+}
+
+/** How much protein shake a member should drink, based on goal, weight and age. 1 scoop = 30 g powder ≈ 24 g protein. */
+export function proteinShakePlan(profile: Profile) {
+  const n = nutrition(profile);
+  const allowed = profile.age >= 18;
+  const big = profile.weightKg >= 85;
+  const trainingScoops = profile.goal === "muscle_gain" || profile.goal === "strength" ? (big ? 2 : 1) : 1;
+  const restScoops = profile.goal === "muscle_gain" || profile.goal === "strength" ? 1 : 0;
+  const fromShake = allowed ? trainingScoops * 24 : 0;
+  return {
+    allowed,
+    dailyProtein: n.protein,
+    perKg: Math.round((n.protein / profile.weightKg) * 10) / 10,
+    trainingScoops,
+    restScoops,
+    fromShake,
+    fromFood: n.protein - fromShake,
+    timing: allowed
+      ? [
+          `Training days: ${trainingScoops} scoop${trainingScoops > 1 ? "s" : ""} (${trainingScoops * 30} g powder, ~${trainingScoops * 24} g protein) within 30-60 min after the workout`,
+          restScoops ? `Rest days: ${restScoops} scoop mid-morning to keep protein high` : "Rest days: no shake needed — get protein from meals",
+          profile.goal === "fat_loss" ? "Mix with water (fewer calories)" : "Mix with low-fat milk for extra protein & calories",
+        ]
+      : ["Under 18: skip protein powders — get protein from milk, eggs, fish, chicken, dhal and chickpeas"],
+  };
 }
 
 /** Meal days for every date of a 3-month gym phase (training days get pre/post-workout meals). */

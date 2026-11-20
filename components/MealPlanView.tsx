@@ -2,20 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { diffDays, formatDate, today } from "@/lib/date";
-import { fmt12, mealDaysForPlan, type EntryKind } from "@/lib/meals";
+import { fmt12, mealDaysForPlan, proteinShakePlan, type EntryKind } from "@/lib/meals";
 import { nutrition } from "@/lib/health";
 import { currentPlan, type Actions } from "@/lib/store";
 import type { AppState } from "@/lib/types";
 import { Badge, Button, cx, Stat, TiltCard } from "./ui";
 
-const ICON: Record<EntryKind, string> = { water: "💧", meal: "🍽", workout: "🏋", sleep: "🌙", wake: "☀️", supplement: "💊" };
+const ICON: Record<EntryKind, string> = { water: "💧", meal: "🍽", workout: "🏋", sleep: "🌙", wake: "☀️", supplement: "🥤" };
 const TONE: Record<EntryKind, string> = {
   water: "border-sky-300/30 bg-sky-400/10",
   meal: "border-emerald-300/30 bg-emerald-400/10",
   workout: "border-orange-300/40 bg-orange-400/10",
   sleep: "border-indigo-300/30 bg-indigo-400/10",
   wake: "border-amber-300/30 bg-amber-400/10",
-  supplement: "border-white/10 bg-white/5",
+  supplement: "border-violet-300/40 bg-violet-400/10",
 };
 
 function Bar({ label, value, target, unit, color }: { label: string; value: number; target: number; unit: string; color: string }) {
@@ -183,9 +183,39 @@ export default function MealPlanView({ state, actions, onExport }: { state: AppS
             <Stat label="Water" value={`${n.waterL} L`} sub="+0.5 L on training days" />
             <Stat label="Meals" value={day.entries.filter((e) => e.kind === "meal").length} sub="today" />
           </div>
+          <TiltCard className="border-violet-300/30">
+            <h3 className="font-bold text-white">🥤 Protein drink guide</h3>
+            {(() => {
+              const s = proteinShakePlan(p);
+              return (
+                <div className="mt-2 space-y-2 text-sm text-slate-300">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-white/5 p-2">
+                      <div className="text-lg font-black text-white">{s.dailyProtein} g</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400">protein / day</div>
+                    </div>
+                    <div className="rounded-xl bg-white/5 p-2">
+                      <div className="text-lg font-black text-violet-200">{s.allowed ? `${s.trainingScoops}×` : "0"}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400">scoop on gym day</div>
+                    </div>
+                    <div className="rounded-xl bg-white/5 p-2">
+                      <div className="text-lg font-black text-white">{s.fromFood} g</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400">from food</div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-400">{s.perKg} g protein per kg body weight. 1 scoop = 30 g powder ≈ 24 g protein.</div>
+                  <ul className="space-y-1">
+                    {s.timing.map((x) => (
+                      <li key={x}>• {x}</li>
+                    ))}
+                  </ul>
+                  <div className="text-xs text-slate-500">Choose a third-party tested whey or plant protein. Food comes first — shakes only fill the gap. Ask a doctor first if you have kidney problems.</div>
+                </div>
+              );
+            })()}
+          </TiltCard>
           <TiltCard>
-            <h3 className="font-bold text-white">Tips</h3>
-            <ul className="mt-2 space-y-1 text-sm text-slate-300">
+            <h3 className="font-bold text-white">Tips</h3>            <ul className="mt-2 space-y-1 text-sm text-slate-300">
               <li>• Weigh food raw where possible; amounts are approximate.</li>
               <li>• Swap any meal for a similar one with the same protein.</li>
               <li>• Limit sugar drinks, fried food and alcohol.</li>
