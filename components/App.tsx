@@ -404,7 +404,7 @@ function GymApp() {
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
         {tab === "today" && <TodayView state={state} actions={actions} onDemo={setDemo} onPlay={onPlay} onGoto={setTab} onCheckIn={() => setCheckIn("manual")} />}
-        {tab === "progress" && <ProgressView state={state} actions={actions} onCheckIn={() => setCheckIn("manual")} />}
+        {tab === "progress" && <ProgressView state={state} actions={actions} memberId={activeRec.id} onCheckIn={() => setCheckIn("manual")} />}
         {tab === "plan" && <GymPlanView state={state} actions={actions} onDemo={setDemo} onPlay={onPlay} onCheckIn={() => setCheckIn("manual")} onExport={() => setExporting(true)} />}
         {tab === "meals" && <MealPlanView state={state} actions={actions} onExport={() => setExporting(true)} />}
         {tab === "cali" && <CaliView state={state} actions={actions} onDemo={setDemo} onPlay={onPlay} />}

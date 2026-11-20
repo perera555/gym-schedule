@@ -7,6 +7,7 @@ import { diffDays, formatDate, formatTime, today, toISODate } from "@/lib/date";
 import { hashPin, needsCheckIn, type useAppState } from "@/lib/store";
 import type { MemberRecord } from "@/lib/types";
 import EditMemberModal from "./EditMemberModal";
+import { daysSinceUpdate, WeeklyProgressModal } from "./WeeklyProgress";
 import InstallApp from "./InstallApp";
 import ProfileForm from "./ProfileForm";
 import { PhotoPicker } from "./ProgressView";
@@ -57,6 +58,7 @@ export default function AdminView({ store, actions }: App) {
   const [newPhoto, setNewPhoto] = useState<string | undefined>();
   const [newMeals, setNewMeals] = useState(true);
   const [editing, setEditing] = useState<MemberRecord | null>(null);
+  const [weekly, setWeekly] = useState<MemberRecord | null>(null);
   const [pinModal, setPinModal] = useState(false);
   const [pin1, setPin1] = useState("");
   const [msg, setMsg] = useState("");
@@ -81,6 +83,7 @@ export default function AdminView({ store, actions }: App) {
   const inGym = store.members.filter((m) => m.attendance.some((a) => !a.timeOut));
   const visitsToday = store.members.reduce((s, m) => s + m.attendance.filter((a) => toISODate(new Date(a.timeIn)) === t).length, 0);
   const due = store.members.filter((m) => needsCheckIn(m));
+  const weeklyDue = store.members.filter((m) => daysSinceUpdate(m.member, m.progress, m.checkIns) >= 7);
 
   const open = (id: string) => {
     actions.selectMember(id);
@@ -162,11 +165,12 @@ export default function AdminView({ store, actions }: App) {
         )}
         {msg && <div className="rounded-2xl border border-emerald-300/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{msg}</div>}
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <Stat label="Members" value={store.members.length} />
           <Stat label="In gym now" value={inGym.length} sub={inGym.map((m) => m.member.profile.name.split(" ")[0]).join(", ") || "—"} />
           <Stat label="Visits today" value={visitsToday} />
           <Stat label="Check-ins due" value={due.length} sub="3-month phase ended" />
+          <Stat label="Weekly updates due" value={weeklyDue.length} sub="7+ days since last" />
         </div>
 
         <TiltCard max={1}>
@@ -209,7 +213,7 @@ export default function AdminView({ store, actions }: App) {
           </div>
 
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
+            <table className="w-full min-w-[920px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="py-2 pr-3">Member</th>
@@ -257,6 +261,7 @@ export default function AdminView({ store, actions }: App) {
                         <div className="flex flex-wrap gap-1">
                           {openVisit && <Badge tone="green">In since {formatTime(openVisit.timeIn)}</Badge>}
                           {needsCheckIn(m) && <Badge tone="orange">Check-in due</Badge>}
+                          {daysSinceUpdate(m.member, m.progress, m.checkIns) >= 7 && <Badge tone="rose">Weekly due</Badge>}
                           {m.mealSeed !== undefined && <Badge tone="slate">Meals</Badge>}
                           {m.cali && <Badge tone="rose">Mil-21 R{m.cali.round}</Badge>}
                         </div>
@@ -272,6 +277,9 @@ export default function AdminView({ store, actions }: App) {
                               Time in
                             </button>
                           )}
+                          <button className="rounded-lg bg-cyan-500/20 px-2 py-1 text-xs font-semibold text-cyan-100 hover:bg-cyan-500/30" onClick={() => setWeekly(m)}>
+                            Weekly update
+                          </button>
                           <button className="rounded-lg bg-white/10 px-2 py-1 text-xs font-semibold text-slate-100 hover:bg-white/20" onClick={() => open(m.id)}>
                             Open
                           </button>
@@ -301,6 +309,9 @@ export default function AdminView({ store, actions }: App) {
         </p>
       </main>
 
+      {weekly && (
+        <WeeklyProgressModal memberId={weekly.id} member={weekly.member} by="admin" actions={actions} onClose={() => { setWeekly(null); setMsg("Weekly update saved."); }} />
+      )}
       {editing && <EditMemberModal key={editing.id} rec={store.members.find((m) => m.id === editing.id) ?? null} actions={actions} onClose={() => setEditing(null)} />}
 
       <Modal open={adding} onClose={() => setAdding(false)}>

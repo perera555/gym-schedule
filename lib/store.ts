@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { generateCali } from "./calisthenics";
 import { addDays, diffDays, today } from "./date";
 import { generatePlan, newSeed } from "./gymPlan";
-import type { AppState, CaliProgram, CheckIn, Level, MemberRecord, Profile, Store } from "./types";
+import type { AppState, CaliProgram, CheckIn, Level, MemberRecord, Profile, ProgressLog, Store } from "./types";
 
 // Storage layout: one index key + one key per member, so every member is saved separately.
 const INDEX_KEY = "ironforge-index-v2";
@@ -106,7 +106,7 @@ function autoAdvanceAll(s: Store): Store {
 function toView(s: Store): AppState {
   const rec = s.members.find((m) => m.id === s.activeId);
   return rec
-    ? { version: 1, member: rec.member, checkIns: rec.checkIns, plans: rec.plans, completedDays: rec.completedDays, attendance: rec.attendance, cali: rec.cali, mealSeed: rec.mealSeed, autoAdvance: s.autoAdvance }
+    ? { version: 1, member: rec.member, checkIns: rec.checkIns, plans: rec.plans, completedDays: rec.completedDays, attendance: rec.attendance, cali: rec.cali, mealSeed: rec.mealSeed, progress: rec.progress, autoAdvance: s.autoAdvance }
     : { version: 1, member: null, checkIns: [], plans: [], completedDays: [], attendance: [], cali: s.guestCali, autoAdvance: s.autoAdvance };
 }
 
@@ -199,7 +199,7 @@ export function useAppState() {
         autoAdvance: v.autoAdvance,
         members: s.members.map((m) =>
           m.id === s.activeId
-            ? { ...m, member: v.member!, checkIns: v.checkIns, plans: v.plans, completedDays: v.completedDays, attendance: v.attendance, cali: v.cali, mealSeed: v.mealSeed, updatedAt: new Date().toISOString() }
+            ? { ...m, member: v.member!, checkIns: v.checkIns, plans: v.plans, completedDays: v.completedDays, attendance: v.attendance, cali: v.cali, mealSeed: v.mealSeed, progress: v.progress, updatedAt: new Date().toISOString() }
             : m,
         ),
       };
@@ -255,6 +255,29 @@ export function useAppState() {
       setStore((s) => ({
         ...s,
         members: s.members.map((m) => (m.id !== id ? m : { ...m, attendance: m.attendance.map((a) => (a.timeOut ? a : { ...a, timeOut: new Date().toISOString() })) })),
+      }));
+    },
+
+    // ---------- weekly progress (member page or admin) ----------
+    /** Add or update a weekly progress entry; the newest entry also becomes the member's current weight. */
+    saveProgress(memberId: string, log: Omit<ProgressLog, "id"> & { id?: string }) {
+      setStore((s) => ({
+        ...s,
+        members: s.members.map((m) => {
+          if (m.id !== memberId) return m;
+          const list = m.progress ?? [];
+          const entry: ProgressLog = { ...log, id: log.id ?? uid() };
+          const progress = (log.id ? list.map((p) => (p.id === log.id ? entry : p)) : [...list, entry]).sort((a, b) => a.date.localeCompare(b.date));
+          const latest = progress[progress.length - 1];
+          const member = latest ? { ...m.member, profile: { ...m.member.profile, weightKg: latest.weightKg } } : m.member;
+          return { ...m, member, progress, updatedAt: new Date().toISOString() };
+        }),
+      }));
+    },
+    deleteProgress(memberId: string, logId: string) {
+      setStore((s) => ({
+        ...s,
+        members: s.members.map((m) => (m.id === memberId ? { ...m, progress: (m.progress ?? []).filter((p) => p.id !== logId), updatedAt: new Date().toISOString() } : m)),
       }));
     },
 

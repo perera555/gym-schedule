@@ -201,7 +201,33 @@ function progressSection(doc: Doc, at: AutoTable, y: number, s: AppState) {
     }),
     headStyles: { fillColor: CYAN },
   });
-  return lastY(doc) + 8;
+  y = lastY(doc) + 6;
+  if (s.progress?.length) {
+    y = heading(doc, y, "Weekly progress updates");
+    at(doc, {
+      ...TABLE,
+      startY: y,
+      head: [["Date", "Weight", "Change", "Waist", "Chest", "Arm", "Hips", "Body fat", "Note"]],
+      body: s.progress.map((p, i) => {
+        const d = i ? p.weightKg - s.progress![i - 1].weightKg : 0;
+        const cm = (v?: number) => (v ? `${v} cm` : "-");
+        return [
+          formatDate(p.date, { day: "numeric", month: "short", year: "numeric" }),
+          `${p.weightKg} kg`,
+          i ? `${d > 0 ? "+" : ""}${d.toFixed(1)} kg` : "-",
+          cm(p.waistCm),
+          cm(p.chestCm),
+          cm(p.armCm),
+          cm(p.hipsCm),
+          p.bodyFatPct ? `${p.bodyFatPct}%` : "-",
+          clean(p.note ?? ""),
+        ];
+      }),
+      headStyles: { fillColor: CYAN },
+    });
+    y = lastY(doc) + 6;
+  }
+  return y + 2;
 }
 
 function gymSection(doc: Doc, at: AutoTable, y: number, plan: GymPlan, completed: string[]) {

@@ -33,6 +33,21 @@ export interface CheckIn {
   note?: string;
 }
 
+/** Weekly progress update (member or admin), separate from the 3-month phase check-in. */
+export interface ProgressLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  weightKg: number;
+  waistCm?: number;
+  chestCm?: number;
+  armCm?: number;
+  hipsCm?: number;
+  bodyFatPct?: number;
+  energy?: 1 | 2 | 3 | 4 | 5;
+  note?: string;
+  by: "member" | "admin";
+}
+
 export interface PlannedExercise {
   id: string; // exercise library id
   sets: number;
@@ -103,6 +118,7 @@ export interface MemberRecord {
   attendance: Attendance[];
   cali: CaliProgram | null;
   mealSeed?: number;
+  progress?: ProgressLog[];
   updatedAt: string;
 }
 
@@ -125,5 +141,6 @@ export interface AppState {
   attendance: Attendance[];
   cali: CaliProgram | null;
   mealSeed?: number;
+  progress?: ProgressLog[];
   autoAdvance: boolean;
 }

@@ -8,6 +8,7 @@ import { fileToAvatar } from "@/lib/photo";
 import { currentPlan, type Actions } from "@/lib/store";
 import type { AppState, GymPlan } from "@/lib/types";
 import { WeightChart } from "./ProfileView";
+import { WeeklyProgressPanel } from "./WeeklyProgress";
 import { Badge, Button, cx, Stat, TiltCard } from "./ui";
 
 export function PhotoPicker({ photo, onChange, size = "h-28 w-28" }: { photo?: string; onChange: (p: string | undefined) => void; size?: string }) {
@@ -110,7 +111,7 @@ function Ring({ pct, label, color = "#22d3ee" }: { pct: number; label: string; c
   );
 }
 
-export default function ProgressView({ state, actions, onCheckIn }: { state: AppState; actions: Actions; onCheckIn: () => void }) {
+export default function ProgressView({ state, actions, onCheckIn, memberId }: { state: AppState; actions: Actions; onCheckIn: () => void; memberId: string }) {
   const m = state.member!;
   const p = m.profile;
   const plan = currentPlan(state);
@@ -229,10 +230,19 @@ export default function ProgressView({ state, actions, onCheckIn }: { state: App
         </TiltCard>
       </div>
 
+      <TiltCard max={1}>
+        <WeeklyProgressPanel memberId={memberId} member={m} progress={state.progress} checkIns={state.checkIns} actions={actions} by="member" />
+      </TiltCard>
+
       <TiltCard max={2}>
         <h3 className="text-lg font-bold text-white">Weight trend</h3>
         <div className="mt-3">
-          <WeightChart points={state.checkIns.map((c) => ({ date: c.date, w: c.weightKg }))} target={p.targetWeightKg} />
+          <WeightChart
+            points={[...state.checkIns.map((c) => ({ date: c.date, w: c.weightKg })), ...(state.progress ?? []).map((x) => ({ date: x.date, w: x.weightKg }))].sort((a, b) =>
+              a.date.localeCompare(b.date),
+            )}
+            target={p.targetWeightKg}
+          />
         </div>
       </TiltCard>
 
