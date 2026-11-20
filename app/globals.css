@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050810;
+  --foreground: #e6edf7;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -12,15 +13,162 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(34, 211, 238, 0.14), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(249, 115, 22, 0.12), transparent 60%),
+    radial-gradient(800px 800px at 50% 120%, rgba(99, 102, 241, 0.12), transparent 60%),
+    var(--background);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.glass {
+  position: relative;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 30px 60px -30px rgba(0, 0, 0, 0.8),
+    0 10px 30px -15px rgba(34, 211, 238, 0.15);
+  backdrop-filter: blur(14px);
+}
+
+.tilt {
+  transition: transform 0.25s ease-out;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.07), transparent 40%);
+}
+
+.btn3d {
+  transform: translateY(0);
+}
+.btn3d:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.text-3d {
+  text-shadow:
+    0 1px 0 #0e7490,
+    0 2px 0 #0c6a83,
+    0 3px 0 #0a5a70,
+    0 4px 0 #084b5d,
+    0 10px 20px rgba(34, 211, 238, 0.35);
+}
+
+.modal-in {
+  animation: modal-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(12deg) translateY(30px) scale(0.96);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.flip {
+  perspective: 1200px;
+}
+.flip-inner {
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip.flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+.flip-face {
+  backface-visibility: hidden;
+}
+.flip-back {
+  transform: rotateY(180deg);
+}
+
+.stage {
+  background:
+    radial-gradient(60% 60% at 50% 40%, rgba(34, 211, 238, 0.18), transparent 70%),
+    linear-gradient(180deg, #0b1324, #05080f);
+}
+
+/* Futuristic holographic member card */
+@property --holo-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.holo-card {
+  background: conic-gradient(from var(--holo-angle), #22d3ee, #6366f1, #f97316, #22d3ee 60%, #0ea5e9, #22d3ee);
+  animation: holo-spin 6s linear infinite;
+  box-shadow:
+    0 0 40px -10px rgba(34, 211, 238, 0.6),
+    0 40px 80px -40px rgba(0, 0, 0, 0.9);
+}
+@keyframes holo-spin {
+  to {
+    --holo-angle: 360deg;
+  }
+}
+.holo-inner {
+  background:
+    linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px) 0 0 / 22px 22px,
+    radial-gradient(120% 80% at 0% 0%, rgba(34, 211, 238, 0.18), transparent 50%),
+    radial-gradient(100% 80% at 100% 100%, rgba(249, 115, 22, 0.15), transparent 50%),
+    #060b17;
+}
+.holo-inner .corner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #22d3ee;
+  opacity: 0.8;
+}
+.corner.tl { top: 12px; left: 12px; border-top: 2px solid; border-left: 2px solid; }
+.corner.tr { top: 12px; right: 12px; border-top: 2px solid; border-right: 2px solid; }
+.corner.bl { bottom: 12px; left: 12px; border-bottom: 2px solid; border-left: 2px solid; }
+.corner.br { bottom: 12px; right: 12px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.holo-photo {
+  background: radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.25), rgba(6, 11, 23, 0.9));
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  box-shadow:
+    0 0 0 4px rgba(34, 211, 238, 0.08),
+    0 0 30px -5px rgba(34, 211, 238, 0.6),
+    inset 0 0 20px rgba(34, 211, 238, 0.2);
+}
+.scanline {
+  position: absolute;
+  inset-inline: 0;
+  height: 30%;
+  top: -30%;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.35), transparent);
+  animation: scan 3s ease-in-out infinite;
+}
+@keyframes scan {
+  to {
+    top: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-card,
+  .scanline {
+    animation: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
